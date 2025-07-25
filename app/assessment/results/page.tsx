@@ -176,7 +176,6 @@ const ResultsPage = () => {
       name: 'Relational and Interactional Fit',
       icon: <Psychology />,
       color: colors.primary,
-      description: 'Understand how you relate to others and your preferred interaction styles',
       path: '/assessment/results/bucket1'
     },
     {
@@ -184,7 +183,6 @@ const ResultsPage = () => {
       name: 'Interests, Motivation, and Growth Potential',
       icon: <Lightbulb />,
       color: colors.success,
-      description: 'Discover what drives you and how you can reach your full potential',
       path: '/assessment/results/bucket2'
     },
     {
@@ -192,7 +190,6 @@ const ResultsPage = () => {
       name: 'Foundational Skills and Readiness',
       icon: <School />,
       color: colors.primary,
-      description: 'Explore your academic strengths and preparation for collaborative learning',
       path: '/assessment/results/bucket3'
     },
     {
@@ -200,7 +197,6 @@ const ResultsPage = () => {
       name: 'Contextual and Holistic Insights',
       icon: <Diversity3 />,
       color: colors.accent,
-      description: 'Understand the full context of your learning journey and environment',
       path: '/assessment/results/bucket4'
     }
   ];
@@ -329,16 +325,14 @@ const ResultsPage = () => {
                       sx={{ fontWeight: 500 }}
                     />
                   </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    {bucket.description}
-                  </Typography>
                   <Button
                     variant="outlined"
                     endIcon={<ArrowForward />}
                     onClick={() => router.push(bucket.path)}
                     sx={{ 
                       textTransform: 'none',
-                      fontWeight: 600
+                      fontWeight: 600,
+                      mt: 2
                     }}
                   >
                     View Detailed Results

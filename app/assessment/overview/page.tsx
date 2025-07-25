@@ -213,38 +213,29 @@ const AssessmentPage = () => {
                   )}
                 </Box>
 
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  {bucket.description}
-                </Typography>
-
-                <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
-                  <strong>Purpose:</strong> {bucket.purpose}
-                </Typography>
-
-                {bucketProgress && (
-                  <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Progress
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {Math.round(progressPercent)}%
-                      </Typography>
-                    </Box>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={progressPercent} 
-                      sx={{ 
-                        height: 6, 
-                        borderRadius: 3,
-                        backgroundColor: '#f0f0f0',
-                        '& .MuiLinearProgress-bar': {
-                          backgroundColor: isCompleted ? '#4caf50' : '#1976d2'
-                        }
-                      }} 
-                    />
+                {/* Progress indicator */}
+                <Box sx={{ mb: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      {isCompleted ? 'Completed' : 'Not Started'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {Math.round(progressPercent)}%
+                    </Typography>
                   </Box>
-                )}
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={progressPercent} 
+                    sx={{ 
+                      height: 6, 
+                      borderRadius: 3,
+                      backgroundColor: '#f5f5f5',
+                      '& .MuiLinearProgress-bar': {
+                        backgroundColor: isCompleted ? '#4caf50' : '#2196f3'
+                      }
+                    }} 
+                  />
+                </Box>
 
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
                   {isCompleted ? (

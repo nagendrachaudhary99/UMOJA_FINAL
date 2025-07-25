@@ -151,46 +151,71 @@ const AssessmentForm = ({ bucket, session, onComplete, onBack }: AssessmentFormP
               value={responses[currentQuestion.id] || ''}
               onChange={(e) => handleResponseChange(e.target.value)}
             >
-              {currentQuestion.response_options?.map((option: any, index: number) => (
-                <FormControlLabel
-                  key={index}
-                  value={option.value}
-                  control={<Radio />}
-                  label={option.label}
-                  sx={{ mb: 1 }}
-                />
-              ))}
+              {currentQuestion.response_options?.map((option: any, index: number) => {
+                // Handle both string array format and object format
+                const optionValue = typeof option === 'string' ? option : option.value;
+                const optionLabel = typeof option === 'string' ? option : option.label;
+                
+                return (
+                  <FormControlLabel
+                    key={index}
+                    value={optionValue}
+                    control={<Radio />}
+                    label={optionLabel}
+                    sx={{ mb: 1 }}
+                  />
+                );
+              })}
             </RadioGroup>
           </FormControl>
         );
 
       case 'likert_scale':
         return (
-          <Box>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+          <FormControl component="fieldset" fullWidth>
+            <FormLabel component="legend" sx={{ mb: 2, fontWeight: 600 }}>
               {currentQuestion.question_text}
-            </Typography>
+            </FormLabel>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
               Rate how much you agree with this statement:
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Typography variant="body2" color="text.secondary">Strongly Disagree</Typography>
-              <Rating
-                value={responses[currentQuestion.id] || 0}
-                onChange={(_, value) => handleResponseChange(value || 0)}
-                max={5}
-                size="large"
+            <RadioGroup
+              value={responses[currentQuestion.id] || ''}
+              onChange={(e) => handleResponseChange(parseInt(e.target.value))}
+              sx={{ gap: 1 }}
+            >
+              <FormControlLabel
+                value="1"
+                control={<Radio />}
+                label="Strongly Disagree"
+                sx={{ mb: 1 }}
               />
-              <Typography variant="body2" color="text.secondary">Strongly Agree</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 1 }}>
-              <Typography variant="caption" color="text.secondary">1</Typography>
-              <Typography variant="caption" color="text.secondary">2</Typography>
-              <Typography variant="caption" color="text.secondary">3</Typography>
-              <Typography variant="caption" color="text.secondary">4</Typography>
-              <Typography variant="caption" color="text.secondary">5</Typography>
-            </Box>
-          </Box>
+              <FormControlLabel
+                value="2"
+                control={<Radio />}
+                label="Disagree"
+                sx={{ mb: 1 }}
+              />
+              <FormControlLabel
+                value="3"
+                control={<Radio />}
+                label="Neutral"
+                sx={{ mb: 1 }}
+              />
+              <FormControlLabel
+                value="4"
+                control={<Radio />}
+                label="Agree"
+                sx={{ mb: 1 }}
+              />
+              <FormControlLabel
+                value="5"
+                control={<Radio />}
+                label="Strongly Agree"
+                sx={{ mb: 1 }}
+              />
+            </RadioGroup>
+          </FormControl>
         );
 
       case 'open_ended':
@@ -221,44 +246,75 @@ const AssessmentForm = ({ bucket, session, onComplete, onBack }: AssessmentFormP
               Select the image that most appeals to you:
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              {currentQuestion.response_options?.map((option: any, index: number) => (
-                <Card
-                  key={index}
-                  sx={{
-                    flex: '1 1 200px',
-                    minWidth: 200,
-                    cursor: 'pointer',
-                    border: responses[currentQuestion.id] === option.value ? '2px solid #1976d2' : '1px solid #e0e0e0',
-                    '&:hover': {
-                      borderColor: '#1976d2',
-                      boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)'
-                    }
-                  }}
-                  onClick={() => handleResponseChange(option.value)}
-                >
-                  <CardContent sx={{ textAlign: 'center', p: 2 }}>
-                    <Box
-                      sx={{
-                        width: '100%',
-                        height: 120,
-                        backgroundColor: '#f5f5f5',
-                        borderRadius: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mb: 1
-                      }}
-                    >
-                      <Typography variant="body2" color="text.secondary">
-                        {option.imageDescription || 'Image Placeholder'}
+              {currentQuestion.response_options?.map((option: any, index: number) => {
+                // Handle both string array format and object format
+                const optionValue = typeof option === 'string' ? option : (option.label || option.value);
+                const optionLabel = typeof option === 'string' ? option : (option.label || option.value);
+                const optionUrl = typeof option === 'object' ? option.url : null;
+                
+                return (
+                  <Card
+                    key={index}
+                    sx={{
+                      flex: '1 1 200px',
+                      minWidth: 200,
+                      cursor: 'pointer',
+                      border: responses[currentQuestion.id] === optionValue ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                      '&:hover': {
+                        borderColor: '#1976d2',
+                        boxShadow: '0 4px 12px rgba(25, 118, 210, 0.15)'
+                      }
+                    }}
+                    onClick={() => handleResponseChange(optionValue)}
+                  >
+                    <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: 120,
+                          borderRadius: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mb: 1,
+                          overflow: 'hidden',
+                          backgroundColor: '#f5f5f5'
+                        }}
+                      >
+                        {optionUrl ? (
+                          <img
+                            src={optionUrl}
+                            alt={optionLabel}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              borderRadius: '4px'
+                            }}
+                            onError={(e) => {
+                              // Fallback to placeholder if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              target.parentElement!.innerHTML = `
+                                <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; color: #666; font-size: 14px;">
+                                  ${optionLabel}
+                                </div>
+                              `;
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            {optionLabel}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {optionLabel}
                       </Typography>
-                    </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                      {option.label}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </Box>
           </Box>
         );

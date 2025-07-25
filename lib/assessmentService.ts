@@ -108,7 +108,7 @@ export class AssessmentService {
         throw new Error('Failed to create user record')
       }
       
-      userData = newUser
+    userData = newUser
     } else if (error) {
       console.error('Error fetching user:', error)
       throw new Error('Failed to fetch user data')
@@ -126,15 +126,40 @@ export class AssessmentService {
     const { data, error } = await supabase
       .from('assessment_buckets')
       .select('*')
-      .eq('age_band', ageBand)
-      .order('name');
+      .eq('age_band', ageBand);
 
     if (error) {
       console.error('Error fetching assessment buckets:', error);
       throw error;
     }
 
-    return data || [];
+    // Define the desired order
+    const bucketOrder = [
+      'Relational & Interactional Fit',
+      'Interests, Motivation & Growth Potential', 
+      'Foundational Skills & Readiness',
+      'Contextual & Holistic Insights'
+    ];
+
+    // Sort buckets according to the desired order
+    const sortedData = (data || []).sort((a, b) => {
+      const indexA = bucketOrder.indexOf(a.name);
+      const indexB = bucketOrder.indexOf(b.name);
+      
+      // If both buckets are in the order array, sort by their position
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      
+      // If only one is in the order array, prioritize it
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      
+      // If neither is in the order array, maintain alphabetical order
+      return a.name.localeCompare(b.name);
+    });
+
+    return sortedData;
   }
 
   // Get questions for a specific bucket

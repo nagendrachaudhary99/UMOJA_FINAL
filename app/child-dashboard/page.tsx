@@ -45,6 +45,7 @@ import {
 } from '@mui/icons-material';
 import Link from 'next/link';
 import ChildProfileForm from '../components/ChildProfileForm';
+import { AssessmentService } from '../../lib/assessmentService';
 
 const mockPod = {
   name: 'STEM Innovators',
@@ -71,7 +72,18 @@ const ChildDashboard = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
-  // Salesforce-inspired color palette
+  const [showProfile, setShowProfile] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null);
+  const [assessmentCompletion, setAssessmentCompletion] = useState(0);
+
+  // Handler functions
+  const handleNotifMenu = (event: React.MouseEvent<HTMLElement>) => setNotificationAnchorEl(event.currentTarget);
+  const handleNotifClose = () => setNotificationAnchorEl(null);
+  const handleProfileModalOpen = () => setShowProfile(true);
+  const handleProfileModalClose = () => setShowProfile(false);
+
+  // Color scheme matching the image
   const colors = {
     primary: '#0176D3', // Salesforce blue
     secondary: '#706E6B', // Salesforce gray
@@ -83,15 +95,87 @@ const ChildDashboard = () => {
     text: '#1B1B1B',
     textSecondary: '#706E6B',
     border: '#DDDBDA',
-    umojaYellow: '#f2c84b', // Hero section yellow
+    accent: '#F2C84B', // Umoja yellow
   };
 
-  const [notifAnchorEl, setNotifAnchorEl] = useState<null | HTMLElement>(null);
-  const [profileModalOpen, setProfileModalOpen] = useState(false);
-  const handleNotifMenu = (event: React.MouseEvent<HTMLElement>) => setNotifAnchorEl(event.currentTarget);
-  const handleNotifClose = () => setNotifAnchorEl(null);
-  const handleProfileModalOpen = () => setProfileModalOpen(true);
-  const handleProfileModalClose = () => setProfileModalOpen(false);
+  // Helper function to map DOB to age band
+  function getAgeBandFromDOB(dob: string): string {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    if (age >= 5 && age <= 8) return 'K-2';
+    if (age >= 8 && age <= 11) return '3-5';
+    if (age >= 11 && age <= 14) return 'MS';
+    if (age >= 14) return 'HS+';
+    return 'K-2'; // fallback
+  }
+
+  // Role validation and assessment data loading useEffect
+  React.useEffect(() => {
+    if (user?.id) {
+      // Check if user has the correct role in metadata
+      const userRole = user?.unsafeMetadata?.userType;
+      
+      if (userRole !== 'child') {
+        // User doesn't have child role, redirect to appropriate dashboard
+        console.log('Child dashboard: User role mismatch, redirecting...');
+        
+        if (userRole === 'guardian') {
+          window.location.href = '/guardian-dashboard';
+        } else {
+          // Unknown role, try to sync
+          const syncUserRole = async () => {
+            try {
+              const response = await fetch('/api/auth/sync-user', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userType: 'child' }),
+              });
+
+              if (response.ok) {
+                const { redirectUrl } = await response.json();
+                if (redirectUrl !== '/child-dashboard') {
+                  window.location.href = redirectUrl;
+                }
+              }
+            } catch (error) {
+              console.error('Error syncing user role:', error);
+            }
+          };
+
+          syncUserRole();
+        }
+      } else {
+        // Load assessment completion data
+        loadAssessmentCompletion();
+      }
+    }
+  }, [user?.id]);
+
+  const loadAssessmentCompletion = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const dob = user?.publicMetadata?.dob as string | undefined;
+      const ageBand = dob ? getAgeBandFromDOB(dob) : 'K-2';
+      
+      const completionData = await AssessmentService.checkAssessmentCompletion(user.id, ageBand);
+      const percentage = completionData.totalBuckets > 0 
+        ? Math.min(100, Math.round((completionData.completedBuckets.length / completionData.totalBuckets) * 100))
+        : 0;
+      
+      setAssessmentCompletion(percentage);
+    } catch (error) {
+      console.error('Error loading assessment completion:', error);
+      setAssessmentCompletion(0);
+    }
+  };
 
   // Calculate real progress percentages
   const calculateProfileCompletion = () => {
@@ -104,15 +188,6 @@ const ChildDashboard = () => {
     
     const completedFields = [hasFirstName, hasLastName, hasEmail, hasProfileImage].filter(Boolean).length;
     return Math.round((completedFields / 4) * 100);
-  };
-
-  const calculateAssessmentCompletion = () => {
-    // This would typically come from assessment data
-    // For now, we'll use a placeholder that could be updated with real data
-    // You can replace this with actual assessment completion logic
-    const totalAssessments = 4; // Total number of assessments
-    const completedAssessments = 4; // Number of completed assessments - assuming all are completed
-    return Math.round((completedAssessments / totalAssessments) * 100);
   };
 
   const calculatePodMatchProgress = () => {
@@ -128,7 +203,6 @@ const ChildDashboard = () => {
   };
 
   const profileCompletion = calculateProfileCompletion();
-  const assessmentCompletion = calculateAssessmentCompletion();
   const podMatchProgress = calculatePodMatchProgress();
 
   return (
@@ -158,7 +232,7 @@ const ChildDashboard = () => {
               sx={{ 
                 fontWeight: 700, 
                 fontFamily: 'Lexend Deca, sans-serif',
-                color: colors.umojaYellow,
+                color: colors.accent,
                 fontSize: '1.25rem',
                 letterSpacing: '-0.5px'
               }}
@@ -197,8 +271,8 @@ const ChildDashboard = () => {
             </IconButton>
             
             <Menu 
-              anchorEl={notifAnchorEl} 
-              open={Boolean(notifAnchorEl)} 
+              anchorEl={notificationAnchorEl} 
+              open={Boolean(notificationAnchorEl)} 
               onClose={handleNotifClose}
               PaperProps={{
                 sx: {
@@ -798,7 +872,7 @@ const ChildDashboard = () => {
 
       {/* Profile Modal */}
       <Dialog
-        open={profileModalOpen}
+        open={showProfile}
         onClose={handleProfileModalClose}
         maxWidth="md"
         fullWidth
