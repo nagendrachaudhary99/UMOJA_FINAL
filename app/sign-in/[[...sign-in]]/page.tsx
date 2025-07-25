@@ -1,8 +1,24 @@
 'use client';
 
-import { SignIn } from "@clerk/nextjs";
+import { SignIn, useUser } from "@clerk/nextjs";
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 const SignInPage = () => {
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      const userType = user.unsafeMetadata?.userType;
+      if (userType === 'child') {
+        router.replace('/child-dashboard');
+      } else if (userType === 'guardian') {
+        router.replace('/guardian-dashboard');
+      }
+    }
+  }, [isLoaded, user, router]);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8" 
       style={{ 
@@ -142,7 +158,6 @@ const SignInPage = () => {
               }
             }
           }}
-          afterSignInUrl="/child-dashboard"
           signUpUrl="/sign-up"
         />
       </div>
